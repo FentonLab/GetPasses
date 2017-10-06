@@ -1,0 +1,378 @@
+#include  <stdio.h>
+#include  <stdlib.h>
+#include  <math.h>
+#include  "tsf.h"
+
+#define	DEBUG	printf("HERE\n"); fflush(stdout);
+
+static neighbors_1();
+static int	compare_1();
+
+mk_field_map(r, time, fm, thr, Ysz, Xsz)
+FLOAT_MAP	r;
+INT_MAP		time,fm;
+float		thr;
+int		Ysz, Xsz;
+
+{
+	int	y, x,tmp_x,tmp_y, fld_num = 1;
+
+	for(y=0; y < Ysz; y++)
+		for(x=0; x < Xsz; x++)
+			if(time[y][x] != -1)
+				fm[y][x] = 0;
+			else
+				fm[y][x] = -1;
+
+	for (y = 0; y < Ysz; y++){
+		for (x = 0; x < Xsz; x++){
+			if (r[y][x] >= thr){
+				if (!fm[y][x]){
+					fm[y][x] = fld_num;
+					tmp_y = y;
+					y--;
+					while((y >= 0) && (r[y][x] >= thr)){
+						if (!fm[y][x] && (r[y][x] >= thr)) 
+							fm[y][x] = fld_num;
+						y--;
+					}
+					y = tmp_y + 1;
+					while((y < Ysz) && (r[y][x] >= thr)){
+						if (!fm[y][x] && (r[y][x] >= thr))
+							fm[y][x] = fld_num;
+						y++;
+					}
+					y = tmp_y;	
+					tmp_x = x;
+					x--;
+					while((x >= 0) && (r[y][x] >= thr)){
+						if (!fm[y][x] && (r[y][x] >= thr))
+							fm[y][x] = fld_num;
+						x--;
+					}
+					x = tmp_x + 1;
+					while((x < Xsz) && (r[y][x] >= thr)){
+						if (!fm[y][x] && (r[y][x] >= thr))
+							fm[y][x] = fld_num;
+						x++;
+					}
+					x = tmp_x;	
+				}
+				fld_num++;
+			}
+		}
+	}
+
+	for(y=0; y < Ysz; y++){
+		for(x=0; x < Xsz; x++)
+			printf("%d ",fm[y][x]);
+		printf("\n");
+	}
+	return(fld_num - 1);
+}
+
+/*
+mk_field_map(rate, time, fld_map, threshold, Ysz, Xsz)
+FLOAT_MAP	rate;
+INT_MAP		time,fld_map;
+float		threshold;
+int		Ysz, Xsz;
+
+{
+	int	y, x, fld_num = 1;
+
+	for(y=0; y < Ysz; y++)
+		for(x=0; x < Xsz; x++)
+			if(time[y][x] != -1)
+				fld_map[y][x] = 0;
+			else
+				fld_map[y][x] = -1;
+
+	for (y = 0; y < Ysz - 1; y++)
+		for (x = 0; x < Xsz - 1; x++)
+			if (rate[y][x] >= threshold)
+				if (!fld_map[y][x]) {
+					neighbors_1(y, x, rate, fld_map, threshold, fld_num);
+					fld_num++;
+				}
+	for(y=0; y < Ysz; y++){
+		for(x=0; x < Xsz; x++)
+			printf("%d ",fld_map[y][x]);
+		printf("\n");
+	}
+	return(fld_num - 1);
+}
+static neighbors_1(i, j, r, fld_map, thr, fld_num)
+int	i, j, fld_num;
+FLOAT_MAP	r;
+float	thr;
+INT_MAP	fld_map;
+
+{
+	int	itmp, jtmp;
+
+	fld_map[i][j] = fld_num;
+	itmp = i;
+
+	for (i -= 1;i < itmp + 2; i += 2){
+		if(i < 0)
+			continue;
+		if (!fld_map[i][j])
+			if (r[i][j] >= thr)
+				neighbors_1(i, j, r, fld_map, thr, fld_num);
+	}
+
+	i = itmp;
+	jtmp = j;
+
+	for (j -= 1;j < itmp + 2; j += 2){
+		if(j < 0)
+			continue;
+		if (!fld_map[i][j])
+			if (r[i][j] >= thr)
+				neighbors_1(i, j, r, fld_map, thr, fld_num);
+	}
+}
+*/
+
+int	prune_field_list(fmap, n_flds, min_siz,Ysz,Xsz)
+INT_MAP	fmap;
+int	n_flds, min_siz,Ysz,Xsz;
+{
+	char	 *calloc();
+	int	i, j, n;
+	int	tmp, good_flds;
+	INT_MAP	t_map;
+	int	compare_1();
+	SORT_FLDS	*to_sort;
+
+	to_sort = (SORT_FLDS *) calloc((unsigned)n_flds, sizeof(SORT_FLDS));
+
+	for (n = 1; n <= n_flds; n++)
+		to_sort[n-1].f_nr = n;
+
+	for (i = 0; i < Ysz; i++)
+		for (j = 0; j < Xsz; j++)
+			if (fmap[i][j] > 0)
+				to_sort[fmap[i][j] - 1].f_sz++;
+
+	qsort((char * ) to_sort, (unsigned)n_flds, sizeof(SORT_FLDS), compare_1);
+
+	n = 0;
+	while (n < n_flds && to_sort[n].f_sz >= min_siz) 
+		n++;
+
+	good_flds = n;
+
+	/* This next loop need not be done if n == n_flds, but what the heck */
+
+	for (i = 0; i < Ysz; i++)
+		for (j = 0; j < Xsz; j++)
+			if ((tmp = fmap[i][j]) > 0)
+				for (n = good_flds; n < n_flds; n++)
+					if (tmp == to_sort[n].f_nr) {
+						fmap[i][j] = 0;
+						break;
+					}
+
+	zero_int(t_map);
+
+	for (i = 0; i < Ysz; i++)
+		for (j = 0; j < Xsz; j++) {
+			for (n = 0; n < good_flds; n++)
+				if (fmap[i][j] == to_sort[n].f_nr) {
+					t_map[i][j] = n + 1;
+					break;
+				}
+		}
+
+	copy_int(fmap, t_map);
+
+	return(good_flds);
+}
+
+
+static compare_1(a, b)
+SORT_FLDS	*a, *b;
+{
+	if (a->f_sz > b->f_sz) 
+		return(-1);
+	if (a->f_sz < b->f_sz) 
+		return(1);
+	return(0);
+}
+
+
+void	do_field_stuff(c, Ysz, Xsz, cent_y, cent_x)
+CELL	*c;
+int	Ysz, Xsz;
+float	cent_y, cent_x;
+{
+	char	 * calloc();
+	int	f, fnr, i, j;
+	void	cent_gravity();
+
+	c->oof_time = 0;
+	c->oof_spks = 0;
+	c->if_spks = 0;
+	c->if_time = 0;
+	for (i = 0; i < Ysz; i++){
+		for (j = 0; j < Xsz; j++){
+			if(c->field_map[i][j] == 0){
+				c->oof_time += c->time_map[i][j];
+				c->oof_spks += c->spk_map[i][j];
+			}else{
+				 if (c->field_map[i][j] > 0){
+					c->if_time += c->time_map[i][j];
+					c->if_spks += c->spk_map[i][j];
+				}
+			}
+		}
+	}
+	if(c->oof_time)
+		c->oof_rate = (float)c->oof_spks / (float)c->oof_time;
+
+	for (f = 0, fnr = 1; f < c->n_fields; f++, fnr++) {
+		c->field[f].size = 0;
+		c->field[f].spks = 0;
+		c->field[f].time = 0;
+		c->field[f].oof_act_pix = 0;
+		c->field[f].oof_spks = 0;
+		c->field[f].oof_time = 0;
+		for (i = 0; i < Ysz; i++){
+			for (j = 0; j < Xsz; j++){
+				if (fnr == c->field_map[i][j]) {
+					c->field[f].size++;
+					c->field[f].time += c->time_map[i][j];
+					c->field[f].spks += c->spk_map[i][j];
+				}
+				else {
+					c->field[f].oof_time += c->time_map[i][j];
+					if(c->spk_map[i][j]){
+						c->field[f].oof_act_pix++;
+						c->field[f].oof_spks += c->spk_map[i][j];
+					}
+				}
+			}
+		}
+		c->field[f].num = fnr;
+		c->field[f].rate = (float) c->field[f].spks / (float)c->field[f].time;
+		c->field[f].rate *= (float) PRAHA_SAMPS_PER_SEC;
+		c->field[f].oof_rate = (float)c->field[f].oof_spks / (float)c->field[f].oof_time;
+		c->field[f].oof_rate *= (float) PRAHA_SAMPS_PER_SEC;
+		if(c->field[f].oof_rate > 0.0){
+			c->field[f].s2n = c->field[f].rate / c->field[f].oof_rate;
+			c->field[f].concent = (c->field[f].rate / c->field[f].size) / (c->field[f].oof_rate / c->field[f].oof_act_pix);
+		}else{
+			c->field[f].s2n = -1.0;
+			c->field[f].concent = -1.0;
+		}
+
+		get_field_center(&(c->field[f]), fnr, c->field_map, c->time_map, c->spk_map,Ysz, Xsz, cent_y, cent_x);
+		cent_gravity(c->rate_map,c->field_map,fnr,&(c->field[f].cg_y),&(c->field[f].cg_x),Ysz,Xsz);
+		get_pol_center(cent_y, cent_x, c->field[f].cg_y, c->field[f].cg_y, &(c->field[f].cg_ang), &(c->field[f].cg_rad));
+		c->field[f].cg_rate = c->rate_map[(int)c->field[f].cg_y][(int)c->field[f].cg_y];
+		/* FIELD COHERENCE NOT IMPLEMENTED YET */
+		c->field[f].coh = -1.0;
+	}
+	
+	if (c->if_time)
+		c->if_rate = ((float) c->if_spks * (float) PRAHA_SAMPS_PER_SEC) / (float) c->if_time;
+	else 
+		c->if_rate = -1.0;
+	if (c->oof_time)
+		c->oof_rate = ((float) c->oof_spks * (float) PRAHA_SAMPS_PER_SEC) / (float) c->oof_time;
+	else 
+		c->oof_rate = -1.0;
+	
+	c->in2out = c->if_rate / c->oof_rate;
+
+	return;
+}
+
+
+get_field_center(fld, fnr, fmap, tm, sp,Ysz,Xsz,cent_y,cent_x)
+FIELD	*fld;
+int	fnr;
+INT_MAP	fmap;
+INT_MAP	tm;
+INT_MAP	sp;
+int	Ysz, Xsz;
+float	cent_y, cent_x;
+{
+	int	i, j, yc_tmp, xc_tmp;
+	int	ttot, stot;
+	float	tmp, max_rt_tmp = 0.0;
+	float	get_3x3_rate();
+
+	ttot = stot = 0;
+
+	for (i = 0; i < Ysz; i++)
+		for (j = 0; j < Xsz; j++)
+			if (fmap[i][j] == fnr) {
+				ttot += tm[i][j];
+				stot += sp[i][j];
+				if ((tmp = get_3x3_rate(i, j, fnr, fmap, tm, sp)) > max_rt_tmp) {
+					max_rt_tmp = tmp;
+					yc_tmp = i;
+					xc_tmp = j;
+				}
+			}
+
+	tmp = (float) stot / (float) ttot;
+	fld->rate   = tmp * (float) PRAHA_SAMPS_PER_SEC;
+	fld->cent_rate = max_rt_tmp * (float) PRAHA_SAMPS_PER_SEC;
+	fld->cent_y = yc_tmp + cent_y;
+	fld->cent_x  = xc_tmp - cent_x;
+
+	get_pol_center(cent_y, cent_x, (float) yc_tmp, (float) xc_tmp, &(fld->cent_ang), &(fld->cent_rad));
+
+}
+
+
+float	get_3x3_rate(y, x, f, fmap, tm, sp)
+int	y, x, f;
+INT_MAP	fmap;
+INT_MAP	tm;
+INT_MAP	sp;
+{
+	int	tsum, ssum, i, j;
+	float	tmp_rt;
+
+	tsum = ssum = 0;
+
+	for (i = y - 1; i < y + 2; i++)
+		for (j = x - 1; j < x + 2; j++)
+			if (f == fmap[i][j]) {
+				tsum += tm[i][j];
+				ssum += sp[i][j];
+			}
+
+	tmp_rt = (float) ssum / (float) tsum;
+
+	return tmp_rt;
+}
+
+
+get_pol_center(a_cent_y, a_cent_x, f_cent_y, f_cent_x, ang, rad)
+float	a_cent_x, a_cent_y, f_cent_y, f_cent_x, *ang, *rad;
+{
+	double	hypot(), atan2(), dx, dy;
+	
+	dy = f_cent_y - a_cent_y;
+	dx = f_cent_x - a_cent_x;
+
+	if((dy == 0.0) && (dx == 0.0)){
+		*rad = 0.0;
+		*ang = 0.0;
+	}else{
+		*rad = (float) hypot((double) (f_cent_x - a_cent_x), (double) (f_cent_y - a_cent_y));
+		*ang = (float) atan2((double) (a_cent_y - f_cent_y), (double) (f_cent_x - a_cent_x));
+
+		if (*ang < 0)
+			*ang += TWO_PI;
+
+		*ang *= DEG_PER_RAD;
+	}
+	return;
+}

@@ -1,0 +1,6 @@
+#define BYTE_FOR_RED_Y	0
+#define BYTE_FOR_RED_X	1
+#define BYTE_FOR_BLU_Y	2
+#define BYTE_FOR_BLU_X	3
+#define BYTE_FOR_SPIKES12	4
+#define BYTE_FOR_SPIKES34	5

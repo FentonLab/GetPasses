@@ -1,0 +1,40 @@
+get_km_data.c:			ts->fm.time_map[y][x] = ts->fm.spk_map[y][x] = 0;
+get_km_data.c:	ts->p = (POSITION *)calloc((size_t)(n_samps), sizeof(POSITION));
+get_km_data.c:	ts->pos = (POSITION *)calloc((size_t)(n_samps), sizeof(POSITION));
+get_km_data.c:        ts->s = (int *)calloc((size_t)(n_samps), sizeof(int));
+get_km_data.c:        if((ts->p == NULL) || (ts->pos == NULL) || (ts->s == NULL)){
+get_km_data.c:		ts->pos[i].x = (int)x;
+get_km_data.c:		ts->pos[i].y = (int)y;
+get_km_data.c:		ts->s[i] = (int)n_spikes1;
+get_km_data.c:		// printf("%d\t%d\t%d\t%d\t",i, ts->p[i].x,ts->pos[i].y,ts->s[i]);
+get_km_data.c:		ts->p[i].x = x = (int)((float)x / reduce_x);
+get_km_data.c:		ts->p[i].y = y = (int)((float)y / reduce_y);
+get_km_data.c:                ts->fm.time_map[y][x]++;
+get_km_data.c:                ts->fm.spk_map[y][x] += n_spikes1;
+get_km_data.c:	ts->n_spks = total_spks;
+get_km_data.c:	ts->tm = (unsigned long *)calloc((size_t)total_spks, sizeof(unsigned long));
+get_km_data.c:        if(ts->tm == NULL){
+get_km_data.c:			ts->tm[spk_cnt] = i * time_step + (int)(drand48() * time_step); 
+get_km_data.c:			if(ts->fm.time_map[y][x] > 0){
+get_km_data.c:				ts->fm.rate_map[y][x] = (float)ts->fm.spk_map[y][x] / (float)ts->fm.time_map[y][x] * (float)tsfile->samps_per_sec;
+get_km_data.c:				ts->fm.rate_map[y][x] =  -1.0;
+get_ts_data.c:			ts->fm.time_map[y][x] = ts->fm.spk_map[y][x] = 0;
+get_ts_data.c:	ts->n_spks = total_spks;
+get_ts_data.c:	ts->p = (POSITION *)calloc((size_t)(n_samps), sizeof(POSITION));
+get_ts_data.c:	ts->pos = (POSITION *)calloc((size_t)(n_samps), sizeof(POSITION));
+get_ts_data.c:        ts->s = (int *)calloc((size_t)(n_samps), sizeof(int));
+get_ts_data.c:        ts->tm = (unsigned long *)calloc((size_t)total_spks, sizeof(unsigned long));
+get_ts_data.c:        if((ts->p == NULL) || (ts->pos == NULL) || (ts->s == NULL) || (ts->tm == NULL)){
+get_ts_data.c:		ts->pos[i].x = (int)x;
+get_ts_data.c:		ts->pos[i].y = (int)y;
+get_ts_data.c:		ts->s[i] = (int)n_spikes;
+get_ts_data.c:		// printf("%d\t%d\t%d\t%d\t",i, ts->p[i].x,ts->pos[i].y,ts->s[i]);
+get_ts_data.c:		ts->p[i].x = x = (int)((float)x / reduce_x);
+get_ts_data.c:		ts->p[i].y = y = (int)((float)y / reduce_y);
+get_ts_data.c:                ts->fm.time_map[y][x]++;
+get_ts_data.c:                ts->fm.spk_map[y][x] += n_spikes;
+get_ts_data.c:			ts->tm[spk_cnt] = spike_time;
+get_ts_data.c:			// printf("%d\t", ts->tm[spk_cnt]);
+get_ts_data.c:			if(ts->fm.time_map[y][x] > 0){
+get_ts_data.c:				ts->fm.rate_map[y][x] = (float)ts->fm.spk_map[y][x] / (float)ts->fm.time_map[y][x] * (float)tsfile->samps_per_sec;
+get_ts_data.c:				ts->fm.rate_map[y][x] =  -1.0;
